@@ -202,7 +202,14 @@ namespace Robust.Shared.ContentPack
             var bag = new ConcurrentBag<VerificationResult>();
             var partitioner = Partitioner.Create(reader.TypeDefinitions);
 
-            Parallel.ForEach(partitioner.GetPartitions(Environment.ProcessorCount), handle =>
+            // On Linux, there's some sort of race condition in ILVerify, or
+            // (more likely) in System.Reflection.Metadata.PEReader.
+            //
+            // Without this, Verifier.SetSystemModuleName has a chance of tripping over
+            // itself, producing very strange exceptions in the process.
+            var maxpar = OperatingSystem.IsLinux() ? 1 : Environment.ProcessorCount;
+
+            Parallel.ForEach(partitioner.GetPartitions(maxpar), handle =>
             {
                 var ver = new Verifier(resolver);
                 ver.SetSystemModuleName(new AssemblyName(SystemAssemblyName));
