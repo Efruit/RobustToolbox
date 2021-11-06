@@ -62,6 +62,22 @@ namespace Robust.Shared.GameObjects
 
             var mapPos = moveEvent.NewPosition.ToMapPos(EntityManager);
 
+            if (entity.TryGetComponent<PhysicsComponent>(out var ePhysComp) &&
+                    _mapManager.TryGetGrid(transform.GridID, out var oGridMap) &&
+                    EntityManager.TryGetEntity(oGridMap.GridEntityId, out var oGrid) &&
+                    oGrid.TryGetComponent<PhysicsComponent>(out var gPhysComp))
+            {
+                // Uniform Circular Motion
+                // r = distance from the rotational center (grid origin)
+                // o = angular speed
+                // v = rω[ -sin o, cos o ] = the vector of motion
+                var r = System.MathF.Abs((oGrid.Transform.WorldPosition - transform.WorldPosition).Length);
+                var o = gPhysComp.AngularVelocity;
+                var v = (new Vector2(-System.MathF.Sin(o), System.MathF.Cos(o))) * r * o;
+
+                ePhysComp.LinearVelocity += v;
+            }
+
             // Change parent if necessary
             if (_mapManager.TryFindGridAt(transform.MapID, mapPos, out var grid) &&
                 EntityManager.TryGetEntity(grid.GridEntityId, out var gridEnt) &&
