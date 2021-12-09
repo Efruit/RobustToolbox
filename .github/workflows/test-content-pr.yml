@@ -1,7 +1,7 @@
-name: Test content master against engine (Master)
+name: Test content master against engine (PR)
 
 on:
-  push:
+  pull_request:
     branches: [ master ]
 
 jobs:
@@ -15,7 +15,6 @@ jobs:
       with:
         repository: space-wizards/space-station-14
         submodules: recursive
-
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
@@ -29,6 +28,10 @@ jobs:
         git fetch origin ${{ github.sha }}
         git checkout FETCH_HEAD
         git submodule update --init --recursive
+    - name: Merge master
+      run: |
+        cd RobustToolbox
+        git merge master
     - name: Install dependencies
       run: dotnet restore
     - name: Build
